@@ -366,12 +366,13 @@ export default function App() {
         {activeTab === 'laporan' && (
           <DailyReportView
             records={historyRecords}
-            whatsappNumber={config.whatsappNumber}
+            config={config}
             onRefreshFromSheet={config.googleScriptUrl ? handleRefreshFromSheet : undefined}
             isRefreshing={isRefreshingSheet}
             onGoToInput={() => setActiveTab('input')}
             newlySavedReportNo={newlySavedReportNo}
             onClearNewlySaved={() => setNewlySavedReportNo(null)}
+            onRecordsChange={setHistoryRecords}
           />
         )}
       </main>

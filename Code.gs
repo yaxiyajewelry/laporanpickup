@@ -151,7 +151,126 @@ function doPost(e) {
       });
     }
 
-    // 2. Validasi field wajib
+    const action = payload.action || 'create';
+    const sheet = getOrCreateDatabaseSheet();
+
+    // ========================================================================
+    // AKSI 1: HAPUS LAPORAN (DELETE)
+    // ========================================================================
+    if (action === 'delete') {
+      const targetNoLaporan = sanitizeText(payload.noLaporan);
+      if (!targetNoLaporan) {
+        return jsonResponse({ success: false, message: 'No. Laporan wajib disertakan untuk menghapus.' });
+      }
+
+      const lastRow = sheet.getLastRow();
+      let foundRow = -1;
+
+      if (lastRow > 1) {
+        const colBValues = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+        for (let i = 0; i < colBValues.length; i++) {
+          if (String(colBValues[i][0] || '').trim() === targetNoLaporan) {
+            foundRow = i + 2; // Baris 1 adalah header
+            break;
+          }
+        }
+      }
+
+      if (foundRow > 1) {
+        sheet.deleteRow(foundRow);
+        return jsonResponse({
+          success: true,
+          message: 'Laporan ' + targetNoLaporan + ' berhasil dihapus dari Google Spreadsheet.',
+          noLaporan: targetNoLaporan
+        });
+      } else {
+        return jsonResponse({
+          success: false,
+          message: 'Laporan dengan nomor ' + targetNoLaporan + ' tidak ditemukan di Google Spreadsheet.'
+        });
+      }
+    }
+
+    // ========================================================================
+    // AKSI 2: EDIT / UPDATE LAPORAN
+    // ========================================================================
+    if (action === 'update' || action === 'edit') {
+      const targetNoLaporan = sanitizeText(payload.noLaporan);
+      if (!targetNoLaporan) {
+        return jsonResponse({ success: false, message: 'No. Laporan wajib disertakan untuk mengedit.' });
+      }
+
+      const lastRow = sheet.getLastRow();
+      let foundRow = -1;
+
+      if (lastRow > 1) {
+        const colBValues = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+        for (let i = 0; i < colBValues.length; i++) {
+          if (String(colBValues[i][0] || '').trim() === targetNoLaporan) {
+            foundRow = i + 2;
+            break;
+          }
+        }
+      }
+
+      if (foundRow <= 1) {
+        return jsonResponse({
+          success: false,
+          message: 'Laporan ' + targetNoLaporan + ' tidak ditemukan untuk diperbarui.'
+        });
+      }
+
+      const namaKurir = sanitizeText(payload.namaKurir);
+      const jasaKirim = sanitizeText(payload.jasaKirim);
+      const jumlahPaket = parseInt(payload.jumlahPaket, 10);
+      const tanggalPickup = sanitizeText(payload.tanggalPickup);
+      const catatan = payload.catatan !== undefined ? sanitizeText(payload.catatan) : '-';
+      const formattedTanggalPickup = formatDisplayDate(tanggalPickup);
+
+      if (namaKurir) sheet.getRange(foundRow, 4).setValue(namaKurir);
+      if (jasaKirim) sheet.getRange(foundRow, 5).setValue(jasaKirim);
+      if (!isNaN(jumlahPaket) && jumlahPaket >= 1) sheet.getRange(foundRow, 6).setValue(jumlahPaket);
+      if (formattedTanggalPickup) sheet.getRange(foundRow, 7).setValue(formattedTanggalPickup);
+      if (catatan !== undefined) sheet.getRange(foundRow, 8).setValue(catatan || '-');
+
+      // Jika ada upload foto baru saat edit
+      let updatedFotoUrl = '';
+      if (payload.foto) {
+        try {
+          const now = new Date();
+          const year = Utilities.formatDate(now, CONFIG.TIMEZONE, 'yyyy');
+          const month = Utilities.formatDate(now, CONFIG.TIMEZONE, 'MM');
+          const targetFolder = getOrCreateSubFolder(year, month);
+          const safeKurirName = (namaKurir || 'update').replace(/[^a-zA-Z0-9_-]/g, '_');
+          const fileName = `${targetNoLaporan}_${safeKurirName}_edited.jpg`;
+
+          const imageBytes = Utilities.base64Decode(payload.foto);
+          const blob = Utilities.newBlob(imageBytes, payload.mimeType || 'image/jpeg', fileName);
+          const file = targetFolder.createFile(blob);
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          updatedFotoUrl = `https://drive.google.com/file/d/${file.getId()}/view`;
+          sheet.getRange(foundRow, 9).setValue(updatedFotoUrl);
+        } catch (photoErr) {
+          Logger.log('Gagal update foto saat edit: ' + photoErr.message);
+        }
+      }
+
+      return jsonResponse({
+        success: true,
+        message: 'Laporan ' + targetNoLaporan + ' berhasil diperbarui di Spreadsheet.',
+        noLaporan: targetNoLaporan,
+        namaKurir: namaKurir,
+        jasaKirim: jasaKirim,
+        jumlahPaket: jumlahPaket,
+        tanggalPickup: formattedTanggalPickup,
+        catatan: catatan,
+        fotoUrl: updatedFotoUrl || undefined
+      });
+    }
+
+    // ========================================================================
+    // AKSI 3: BUAT LAPORAN BARU (CREATE - DEFAULT)
+    // ========================================================================
     const namaKurir = sanitizeText(payload.namaKurir);
     const jasaKirim = sanitizeText(payload.jasaKirim);
     const jumlahPaket = parseInt(payload.jumlahPaket, 10);
@@ -175,9 +294,6 @@ function doPost(e) {
     if (!fotoBase64) {
       return jsonResponse({ success: false, message: 'Foto bukti pickup wajib dilampirkan.' });
     }
-
-    // 3. Siapkan Spreadsheet & Sheet
-    const sheet = getOrCreateDatabaseSheet();
 
     // 4. Generate No. Laporan & Waktu Laporan (WIB)
     const now = new Date();

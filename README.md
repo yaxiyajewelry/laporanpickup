@@ -25,6 +25,9 @@ Aplikasi digital berbasis web (mobile-first & desktop responsive) untuk pencatat
   - **Menu "INPUT DATA"**: Form pencatatan serah terima kurir baru dengan kamera HP dan upload Google Drive.
   - **Tombol "Simpan Laporan"**: Menggantikan tombol kirim; setelah ditekan dan data tersimpan, aplikasi **otomatis langsung berpindah ke menu LAPORAN** dengan notifikasi sukses dan penanda laporan baru.
   - **Menu "LAPORAN"**: Halaman rekapitulasi laporan harian dengan kalender pemilih tanggal, ringkasan total paket & total pickup kurir.
+- **Fitur Edit & Delete Laporan (Sinkron Langsung ke Spreadsheet)**:
+  - **Edit Laporan**: Setiap kartu laporan memiliki tombol Edit untuk mengubah Nama Kurir, Jasa Kirim, Jumlah Paket, Tanggal Pickup, Catatan, atau mengganti Foto Bukti Pickup. Perubahan langsung diupdate di baris Google Spreadsheet.
+  - **Delete Laporan**: Setiap kartu laporan memiliki tombol Hapus dengan **Popup Modal Konfirmasi** (mencegah klik tidak sengaja). Saat dikonfirmasi, baris laporan langsung dihapus dari Google Spreadsheet dan aplikasi.
 - **Kirim Sekaligus Seluruh Laporan Hari Itu ke WhatsApp**:
   - Tombol **"Kirim Semua Laporan Hari Ini ke WhatsApp"** menggabungkan seluruh laporan pickup pada hari tersebut (misal 3 laporan kurir berbeda) ke dalam 1 pesan WhatsApp rapi lengkap dengan masing-masing nomor laporan, kurir, jumlah paket, dan link foto Google Drive asli!
   - Juga tersedia tombol salin teks rekap dan kirim per item secara terpisah.

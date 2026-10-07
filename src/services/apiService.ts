@@ -268,3 +268,178 @@ export async function submitPickupReport(
     );
   }
 }
+
+/**
+ * Hapus record dari local storage
+ */
+export function deleteLocalPickupRecord(noLaporan: string): void {
+  try {
+    const history = getLocalPickupHistory();
+    const updated = history.filter((h) => h.noLaporan !== noLaporan);
+    localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error('Failed to delete record from history', e);
+  }
+}
+
+/**
+ * Perbarui record di local storage
+ */
+export function updateLocalPickupRecord(record: PickupRecord): void {
+  try {
+    const history = getLocalPickupHistory();
+    const index = history.findIndex((h) => h.noLaporan === record.noLaporan);
+    if (index !== -1) {
+      history[index] = { ...history[index], ...record };
+    } else {
+      history.unshift(record);
+    }
+    localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify(history));
+  } catch (e) {
+    console.error('Failed to update record in history', e);
+  }
+}
+
+/**
+ * Hapus laporan di Google Spreadsheet & Lokal
+ */
+export async function deletePickupReport(
+  noLaporan: string,
+  config: AppConfig
+): Promise<{ success: boolean; message: string }> {
+  const url = (config.googleScriptUrl || '').trim();
+
+  // Hapus dari local storage terlebih dahulu
+  deleteLocalPickupRecord(noLaporan);
+
+  if (!url || config.useDemoMode) {
+    return {
+      success: true,
+      message: `Laporan ${noLaporan} berhasil dihapus.`,
+    };
+  }
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify({
+        action: 'delete',
+        noLaporan: noLaporan,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const res = await response.json();
+    return {
+      success: res.success ?? true,
+      message: res.message || `Laporan ${noLaporan} berhasil dihapus dari Spreadsheet.`,
+    };
+  } catch (err: any) {
+    console.warn('Gagal menghapus di spreadsheet backend:', err);
+    return {
+      success: true,
+      message: `Laporan ${noLaporan} telah dihapus dari aplikasi.`,
+    };
+  }
+}
+
+/**
+ * Edit / Update laporan di Google Spreadsheet & Lokal
+ */
+export async function updatePickupReport(
+  payload: {
+    noLaporan: string;
+    namaKurir: string;
+    jasaKirim: string;
+    jumlahPaket: number;
+    tanggalPickup: string; // YYYY-MM-DD
+    catatan: string;
+    fotoBase64?: string;
+    mimeType?: string;
+  },
+  config: AppConfig
+): Promise<{ success: boolean; message: string; updatedRecord?: Partial<PickupRecord> }> {
+  const url = (config.googleScriptUrl || '').trim();
+
+  const formattedTgl = formatJakartaDisplayDate(payload.tanggalPickup);
+  const localUpdate: Partial<PickupRecord> = {
+    namaKurir: payload.namaKurir,
+    jasaKirim: payload.jasaKirim,
+    jumlahPaket: payload.jumlahPaket,
+    tanggalPickup: formattedTgl,
+    catatan: payload.catatan || '-',
+  };
+
+  const history = getLocalPickupHistory();
+  const existing = history.find((h) => h.noLaporan === payload.noLaporan);
+  if (existing) {
+    const updatedFull: PickupRecord = {
+      ...existing,
+      ...localUpdate,
+      namaKurir: payload.namaKurir,
+      jasaKirim: payload.jasaKirim,
+      jumlahPaket: payload.jumlahPaket,
+      tanggalPickup: formattedTgl,
+      catatan: payload.catatan || '-',
+    };
+    updateLocalPickupRecord(updatedFull);
+  }
+
+  if (!url || config.useDemoMode) {
+    return {
+      success: true,
+      message: `Laporan ${payload.noLaporan} berhasil diperbarui.`,
+      updatedRecord: localUpdate,
+    };
+  }
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify({
+        action: 'update',
+        noLaporan: payload.noLaporan,
+        namaKurir: payload.namaKurir,
+        jasaKirim: payload.jasaKirim,
+        jumlahPaket: payload.jumlahPaket,
+        tanggalPickup: payload.tanggalPickup,
+        catatan: payload.catatan,
+        foto: payload.fotoBase64,
+        mimeType: payload.mimeType || 'image/jpeg',
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const res = await response.json();
+    if (res.fotoUrl && existing) {
+      existing.fotoUrl = res.fotoUrl;
+      updateLocalPickupRecord(existing);
+      localUpdate.fotoUrl = res.fotoUrl;
+    }
+
+    return {
+      success: res.success ?? true,
+      message: res.message || `Laporan ${payload.noLaporan} berhasil diperbarui di Spreadsheet.`,
+      updatedRecord: localUpdate,
+    };
+  } catch (err: any) {
+    console.warn('Gagal update di backend spreadsheet:', err);
+    return {
+      success: true,
+      message: `Laporan ${payload.noLaporan} telah diperbarui di aplikasi.`,
+      updatedRecord: localUpdate,
+    };
+  }
+}
