@@ -12,7 +12,7 @@ const STORAGE_KEY = 'yaxiya_pickup_config_v1';
 
 export const DEFAULT_CONFIG: AppConfig = {
   // Masukkan URL Google Apps Script Web App hasil deploy (atau atur via menu Pengaturan di aplikasi)
-  googleScriptUrl: '',
+  googleScriptUrl: 'https://script.google.com/macros/s/AKfycbz5ObT5ymjyuBriGGRujZNcLnhvfF_UwaPZNdNKE15hp_hJHCh7XtB-Cwfi0eo0R8Rn/exec',
   // Masukkan nomor WhatsApp tujuan (format: 628xxx) atau kosongkan untuk memilih kontak manual
   whatsappNumber: '',
   useDemoMode: false,
