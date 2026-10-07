@@ -11,7 +11,7 @@ export interface AppConfig {
 const STORAGE_KEY = 'yaxiya_pickup_config_v1';
 
 export const DEFAULT_CONFIG: AppConfig = {
-  // Masukkan URL Google Apps Script Web App hasil deploy (atau atur via menu Pengaturan di aplikasi)
+  // URL Google Apps Script Web App resmi hasil deployment
   googleScriptUrl: 'https://script.google.com/macros/s/AKfycbz5ObT5ymjyuBriGGRujZNcLnhvfF_UwaPZNdNKE15hp_hJHCh7XtB-Cwfi0eo0R8Rn/exec',
   // Masukkan nomor WhatsApp tujuan (format: 628xxx) atau kosongkan untuk memilih kontak manual
   whatsappNumber: '',
@@ -22,7 +22,15 @@ export function loadConfig(): AppConfig {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      return { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
+      const parsed = JSON.parse(saved);
+      return {
+        ...DEFAULT_CONFIG,
+        ...parsed,
+        // Pastikan selalu menggunakan URL script default jika yang tersimpan kosong
+        googleScriptUrl: (parsed.googleScriptUrl && parsed.googleScriptUrl.trim())
+          ? parsed.googleScriptUrl.trim()
+          : DEFAULT_CONFIG.googleScriptUrl,
+      };
     }
   } catch (e) {
     console.error('Failed to load config from localStorage', e);

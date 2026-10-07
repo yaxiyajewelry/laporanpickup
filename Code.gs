@@ -14,12 +14,11 @@
 
 // KONFIGURASI UTAMA
 const CONFIG = {
-  // Biarkan kosong jika ingin dibuat otomatis saat pertama kali dijalankan,
-  // atau isi ID Spreadsheet jika sudah memiliki Spreadsheet tertentu:
-  SPREADSHEET_ID: '',
+  // ID Spreadsheet Google
+  SPREADSHEET_ID: '1ZGIAw9sY2uBTwQwBLjfcWfUqYWB1eHX-CL8BTpMsgK8',
 
-  // Biarkan kosong jika ingin folder utama dibuat otomatis di Google Drive:
-  DRIVE_FOLDER_ID: '',
+  // ID Folder Utama Google Drive
+  DRIVE_FOLDER_ID: '1pLmR1TW7TL0cDKQM-IJrqjgjBWI-LAIw',
 
   // Pengaturan sistem
   TIMEZONE: 'Asia/Jakarta',
