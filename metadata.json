@@ -1,0 +1,9 @@
+{
+  "name": "Yaxiya Jewelry - Sistem Aplikasi Pickup",
+  "description": "Sistem Aplikasi Pickup Paket Yaxiya Jewelry terintegrasi Google Drive, Google Spreadsheet, dan WhatsApp.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
