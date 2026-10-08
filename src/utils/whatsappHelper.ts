@@ -63,7 +63,7 @@ export function generateCombinedDailyWhatsAppMessage(
   reports.forEach((item, index) => {
     const itemTgl = formatJakartaDisplayDate(item.tanggalPickup);
 
-    msg += `[${index + 1}] No. Laporan : ${item.noLaporan}\n`;
+    msg += `*[${index + 1}] No. Laporan : ${item.noLaporan}*\n`;
     msg += `• Waktu : ${item.waktuLaporan}\n`;
     msg += `• Kurir : ${item.namaKurir} (${item.jasaKirim})\n`;
     msg += `• Jumlah : ${item.jumlahPaket} Paket\n`;
