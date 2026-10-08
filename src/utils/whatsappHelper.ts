@@ -1,3 +1,5 @@
+import { formatJakartaDisplayDate } from './dateHelper';
+
 /**
  * Helper untuk format dan navigasi WhatsApp
  */
@@ -8,7 +10,7 @@ export interface WhatsAppReportData {
   namaKurir: string;
   jasaKirim: string;
   jumlahPaket: number;
-  tanggalPickup: string; // Format DD/MM/YYYY
+  tanggalPickup: string; // Format "Hari, DD/MM/YYYY" (contoh: "Rabu, 07/10/2026")
   fotoUrl: string;
   catatan?: string;
 }
@@ -17,14 +19,16 @@ export interface WhatsAppReportData {
  * Membuat format pesan teks resmi WhatsApp untuk Pickup Yaxiya Jewelry (Satuan)
  */
 export function generateWhatsAppMessage(data: WhatsAppReportData): string {
-  let msg = `*LAPORAN PICKUP YAXIYA JEWELRY*
+  const formattedTgl = formatJakartaDisplayDate(data.tanggalPickup);
+
+  let msg = `LAPORAN PICKUP YAXIYA JEWELRY
 
 No. Laporan : ${data.noLaporan}
 Waktu Laporan : ${data.waktuLaporan}
 Nama Kurir : ${data.namaKurir}
 Jasa Kirim : ${data.jasaKirim}
 Jumlah Paket : ${data.jumlahPaket}
-Tanggal Pickup : ${data.tanggalPickup}
+Tanggal Pickup : ${formattedTgl}
 Foto Bukti Laporan : ${data.fotoUrl}`;
 
   if (data.catatan && data.catatan.trim() && data.catatan !== '-') {
@@ -41,25 +45,29 @@ export function generateCombinedDailyWhatsAppMessage(
   reports: WhatsAppReportData[],
   displayDate: string
 ): string {
+  const formattedHeaderDate = formatJakartaDisplayDate(displayDate);
+
   if (reports.length === 0) {
-    return `LAPORAN PICKUP YAXIYA JEWELRY\nTanggal : ${displayDate}\nBelum ada laporan pickup yang tercatat.`;
+    return `LAPORAN PICKUP YAXIYA JEWELRY\nTanggal : ${formattedHeaderDate}\nBelum ada laporan pickup yang tercatat.`;
   }
 
   const totalPaket = reports.reduce((acc, curr) => acc + (curr.jumlahPaket || 0), 0);
   const totalLaporan = reports.length;
 
   let msg = `*REKAP LAPORAN PICKUP YAXIYA JEWELRY*\n`;
-  msg += `*Tanggal : ${displayDate}*\n`;
+  msg += `*Tanggal : ${formattedHeaderDate}*\n`;
   msg += `*Total Pickup : ${totalLaporan} Kurir*\n`;
   msg += `*Total Paket : ${totalPaket} Paket*\n`;
   msg += `================================\n\n`;
 
   reports.forEach((item, index) => {
-    msg += `*[${index + 1}] No. Laporan : ${item.noLaporan}*\n`;
+    const itemTgl = formatJakartaDisplayDate(item.tanggalPickup);
+
+    msg += `[${index + 1}] No. Laporan : ${item.noLaporan}\n`;
     msg += `• Waktu : ${item.waktuLaporan}\n`;
     msg += `• Kurir : ${item.namaKurir} (${item.jasaKirim})\n`;
     msg += `• Jumlah : ${item.jumlahPaket} Paket\n`;
-    msg += `• Tanggal Pickup : ${item.tanggalPickup}\n`;
+    msg += `• Tanggal Pickup : ${itemTgl}\n`;
     if (item.catatan && item.catatan.trim() && item.catatan !== '-') {
       msg += `• Catatan : ${item.catatan.trim()}\n`;
     }

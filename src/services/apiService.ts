@@ -101,7 +101,7 @@ export async function fetchReportsFromSpreadsheet(
         namaKurir: r.namaKurir || '',
         jasaKirim: r.jasaKirim || '',
         jumlahPaket: Number(r.jumlahPaket) || 0,
-        tanggalPickup: r.tanggalPickup || '',
+        tanggalPickup: formatJakartaDisplayDate(r.tanggalPickup || ''),
         catatan: r.catatan || '',
         fotoUrl: r.fotoUrl || '',
         createdAt: r.timestamp || new Date().toISOString(),

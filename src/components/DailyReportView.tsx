@@ -35,7 +35,7 @@ import {
   buildWhatsAppUrl,
   openWhatsAppSafely,
 } from '../utils/whatsappHelper';
-import { formatJakartaDisplayDate, getJakartaTodayDateString } from '../utils/dateHelper';
+import { formatJakartaDisplayDate, getJakartaTodayDateString, toIsoDateString } from '../utils/dateHelper';
 import { SHIPPING_SERVICES } from './CourierInfoCard';
 import { validateImageFile, compressImage, CompressionResult } from '../utils/imageCompressor';
 
@@ -105,6 +105,7 @@ export const DailyReportView: React.FC<DailyReportViewProps> = ({
   const dailyReports = useMemo(() => {
     return records.filter((rec) => {
       if (rec.tanggalPickup) {
+        if (toIsoDateString(rec.tanggalPickup) === selectedDate) return true;
         if (rec.tanggalPickup === selectedDate) return true;
         if (rec.tanggalPickup === displayDateStr) return true;
       }
@@ -294,12 +295,8 @@ export const DailyReportView: React.FC<DailyReportViewProps> = ({
 
   const convertDisplayToIsoDate = (displayStr: string): string => {
     if (!displayStr) return todayYmd;
-    if (displayStr.includes('-')) return displayStr;
-    const parts = displayStr.split('/');
-    if (parts.length === 3) {
-      return `${parts[2]}-${parts[1]}-${parts[0]}`;
-    }
-    return todayYmd;
+    const iso = toIsoDateString(displayStr);
+    return iso || todayYmd;
   };
 
   const handleEditPhotoSelected = async (file: File) => {
@@ -694,8 +691,15 @@ export const DailyReportView: React.FC<DailyReportViewProps> = ({
                       </span>
                     </div>
 
+                    <div>
+                      <span className="text-slate-400 block text-[11px]">Tanggal Pickup:</span>
+                      <span className="font-semibold text-slate-700 text-xs">
+                        {formatJakartaDisplayDate(rec.tanggalPickup)}
+                      </span>
+                    </div>
+
                     {rec.catatan && rec.catatan !== '-' && (
-                      <div>
+                      <div className="sm:col-span-2">
                         <span className="text-slate-400 block text-[11px]">Catatan:</span>
                         <span className="text-slate-700 italic bg-slate-50 px-2 py-1 rounded-md block">
                           "{rec.catatan}"
@@ -819,7 +823,7 @@ export const DailyReportView: React.FC<DailyReportViewProps> = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Tanggal Pickup:</span>
-                <span className="font-semibold text-slate-700">{reportToDelete.tanggalPickup}</span>
+                <span className="font-semibold text-slate-700">{formatJakartaDisplayDate(reportToDelete.tanggalPickup)}</span>
               </div>
             </div>
 

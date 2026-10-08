@@ -11,7 +11,7 @@ import { PickupProofCard } from './components/PickupProofCard';
 import { SubmitButton } from './components/SubmitButton';
 import { DailyReportView } from './components/DailyReportView';
 import { loadConfig, AppConfig } from './config';
-import { getJakartaTodayDateString, getJakartaCompactDateString, formatJakartaDisplayDate } from './utils/dateHelper';
+import { getJakartaTodayDateString, getJakartaCompactDateString, formatJakartaDisplayDate, toIsoDateString } from './utils/dateHelper';
 import { validateImageFile, compressImage, CompressionResult } from './utils/imageCompressor';
 import {
   submitPickupReport,
@@ -79,13 +79,15 @@ export default function App() {
 
   // Hitung jumlah laporan hari ini untuk badge tab LAPORAN
   const todayCompact = getJakartaCompactDateString();
-  const todayDisplay = formatJakartaDisplayDate(getJakartaTodayDateString());
+  const todayIso = getJakartaTodayDateString();
+  const todayDisplay = formatJakartaDisplayDate(todayIso);
   const todayReportCount = historyRecords.filter((rec) => {
     return (
       (rec.noLaporan && rec.noLaporan.includes(todayCompact)) ||
+      toIsoDateString(rec.tanggalPickup) === todayIso ||
       rec.tanggalPickup === todayDisplay ||
-      rec.tanggalPickup === getJakartaTodayDateString() ||
-      (rec.createdAt && rec.createdAt.startsWith(getJakartaTodayDateString()))
+      rec.tanggalPickup === todayIso ||
+      (rec.createdAt && rec.createdAt.startsWith(todayIso))
     );
   }).length;
 

@@ -62,13 +62,15 @@ function doGet(e) {
         const values = sheet.getRange(2, 1, lastRow - 1, 10).getValues();
         for (let i = 0; i < values.length; i++) {
           const row = values[i];
-          const tglPickupRow = String(row[6] || '').trim(); // Kolom G: Tanggal Pickup (DD/MM/YYYY)
+          // Kolom G: Tanggal Pickup - format ke "Hari, DD/MM/YYYY"
+          const tglPickupRow = formatDisplayDate(row[6]);
           const noLap = String(row[1] || '').trim();
 
           // Jika ada filter tanggal, periksa kesesuaian
           if (tanggalFilter) {
+            const cleanFilter = tanggalFilter.replace(/-/g, '');
             const matchFormatted = tglPickupRow.includes(tanggalFilter);
-            const matchNoLap = noLap.includes(tanggalFilter.replace(/-/g, ''));
+            const matchNoLap = noLap.includes(cleanFilter);
             if (!matchFormatted && !matchNoLap) {
               continue;
             }
@@ -556,15 +558,69 @@ function generateNextReportNumber(sheet, compactDate) {
 }
 
 /**
- * Format tanggal YYYY-MM-DD ke DD/MM/YYYY
+ * Format tanggal ke format "Hari, DD/MM/YYYY" (contoh: "Rabu, 07/10/2026")
  */
-function formatDisplayDate(dateStr) {
-  if (!dateStr) return '';
-  const parts = dateStr.split('-');
-  if (parts.length === 3) {
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+function formatDisplayDate(input) {
+  if (!input) return '';
+  const hariArr = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const monthMap = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+  const pad = function(n) { return (n < 10 ? '0' : '') + n; };
+
+  // Kasus 1: Objek Date di Apps Script
+  if (input instanceof Date && !isNaN(input.getTime())) {
+    const dayName = hariArr[input.getDay()];
+    const dStr = Utilities.formatDate(input, CONFIG.TIMEZONE, 'dd/MM/yyyy');
+    return dayName + ', ' + dStr;
   }
-  return dateStr;
+
+  const str = String(input).trim();
+  if (!str) return '';
+
+  // Kasus 2: Sudah berformat "Hari, DD/MM/YYYY"
+  if (/^[A-Za-z]+,\s*\d{1,2}\/\d{1,2}\/\d{4}/.test(str)) {
+    return str;
+  }
+
+  // Kasus 3: String Date default Apps Script: "Wed Oct 07 2026 00:00:00 GMT+0700 (Waktu Indonesia Barat)"
+  const gmtMatch = str.match(/^[A-Za-z]{3}\s+([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4})/);
+  if (gmtMatch) {
+    const m = monthMap[gmtMatch[1].toLowerCase()];
+    const d = parseInt(gmtMatch[2], 10);
+    const y = parseInt(gmtMatch[3], 10);
+    if (m && !isNaN(d) && !isNaN(y)) {
+      const dt = new Date(y, m - 1, d, 12, 0, 0);
+      const dayName = hariArr[dt.getDay()];
+      return dayName + ', ' + pad(d) + '/' + pad(m) + '/' + y;
+    }
+  }
+
+  // Kasus 4: Format YYYY-MM-DD (dari <input type="date">)
+  const ymdParts = str.split('-');
+  if (ymdParts.length === 3) {
+    const y = parseInt(ymdParts[0], 10);
+    const m = parseInt(ymdParts[1], 10);
+    const d = parseInt(ymdParts[2], 10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+      const dt = new Date(y, m - 1, d, 12, 0, 0);
+      const dayName = hariArr[dt.getDay()];
+      return dayName + ', ' + pad(d) + '/' + pad(m) + '/' + y;
+    }
+  }
+
+  // Kasus 5: Format DD/MM/YYYY
+  const dmyParts = str.split('/');
+  if (dmyParts.length === 3) {
+    const d = parseInt(dmyParts[0], 10);
+    const m = parseInt(dmyParts[1], 10);
+    const y = parseInt(dmyParts[2], 10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+      const dt = new Date(y, m - 1, d, 12, 0, 0);
+      const dayName = hariArr[dt.getDay()];
+      return dayName + ', ' + pad(d) + '/' + pad(m) + '/' + y;
+    }
+  }
+
+  return str;
 }
 
 /**
