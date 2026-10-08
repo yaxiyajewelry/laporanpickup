@@ -17,7 +17,7 @@ export interface WhatsAppReportData {
  * Membuat format pesan teks resmi WhatsApp untuk Pickup Yaxiya Jewelry (Satuan)
  */
 export function generateWhatsAppMessage(data: WhatsAppReportData): string {
-  let msg = `LAPORAN PICKUP YAXIYA JEWELRY
+  let msg = `*LAPORAN PICKUP YAXIYA JEWELRY*
 
 No. Laporan : ${data.noLaporan}
 Waktu Laporan : ${data.waktuLaporan}
@@ -48,14 +48,14 @@ export function generateCombinedDailyWhatsAppMessage(
   const totalPaket = reports.reduce((acc, curr) => acc + (curr.jumlahPaket || 0), 0);
   const totalLaporan = reports.length;
 
-  let msg = `REKAP LAPORAN PICKUP YAXIYA JEWELRY\n`;
-  msg += `Tanggal : ${displayDate}\n`;
-  msg += `Total Pickup : ${totalLaporan} Kurir\n`;
-  msg += `Total Paket : ${totalPaket} Paket\n`;
+  let msg = `*REKAP LAPORAN PICKUP YAXIYA JEWELRY*\n`;
+  msg += `*Tanggal : ${displayDate}*\n`;
+  msg += `*Total Pickup : ${totalLaporan} Kurir*\n`;
+  msg += `*Total Paket : ${totalPaket} Paket*\n`;
   msg += `================================\n\n`;
 
   reports.forEach((item, index) => {
-    msg += `[${index + 1}] No. Laporan : ${item.noLaporan}\n`;
+    msg += `*[${index + 1}] No. Laporan : ${item.noLaporan}*\n`;
     msg += `• Waktu : ${item.waktuLaporan}\n`;
     msg += `• Kurir : ${item.namaKurir} (${item.jasaKirim})\n`;
     msg += `• Jumlah : ${item.jumlahPaket} Paket\n`;
@@ -67,8 +67,8 @@ export function generateCombinedDailyWhatsAppMessage(
   });
 
   msg += `================================\n`;
-  msg += `TOTAL KESELURUHAN: ${totalPaket} PAKET (${totalLaporan} KALI PICKUP)\n`;
-  msg += `Laporan serah terima resmi Yaxiya Jewelry`;
+  msg += `*TOTAL KESELURUHAN: ${totalPaket} PAKET (${totalLaporan} KALI PICKUP)*\n`;
+  msg += `_Laporan serah terima resmi Yaxiya Jewelry_`;
 
   return msg.trim();
 }
